@@ -24,3 +24,5 @@ Examples:
 
   rogg_serial changes the serial number of a logical ogg stream.
 
+  rogg_kate will dump and optionally set the language, category,
+  and original canvas size stored in an Ogg Kate stream.

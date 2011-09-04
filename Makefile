@@ -8,7 +8,7 @@ prefix = /usr/local
 OPTS = -g -O2 -Wall
 
 rogg_UTILS = rogg_pagedump rogg_eosfix rogg_crcfix \
-	rogg_stats rogg_serial rogg_theora
+	rogg_stats rogg_serial rogg_theora rogg_kate
 
 all : librogg.a $(rogg_UTILS)
 
@@ -34,6 +34,9 @@ rogg_serial : rogg_serial.o librogg.a
 	$(CC) $(CFLAGS) -o $@ $^
 
 rogg_theora : rogg_theora.o librogg.a
+	$(CC) $(CFLAGS) -o $@ $^
+
+rogg_kate : rogg_kate.o librogg.a
 	$(CC) $(CFLAGS) -o $@ $^
 
 check : all
