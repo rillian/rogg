@@ -73,8 +73,7 @@ int main(int argc, char *argv[])
 	close(f);
 	continue;
     }
-    p = mmap(0, s.st_size, PROT_READ,
-	MAP_SHARED, f, 0);
+    p = mmap(0, s.st_size, PROT_READ, MAP_SHARED, f, 0);
     if (p == MAP_FAILED) {
 	fprintf(stderr, "couldn't mmap '%s'\n", argv[i]);
 	close(f);
