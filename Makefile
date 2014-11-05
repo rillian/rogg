@@ -68,7 +68,6 @@ VERSION := $(or $(GIT_VERSION),$(VERSION),unknown)
 distdir = $(PACKAGE)-$(VERSION)
 dist : *.c *.h Makefile
 	if test -d $(distdir); then rm -rf $(distdir); fi
-	-rm -rf $(PACKAGE)-$(VERSION)
 	mkdir $(distdir)
 	cp *.c *.h $(distdir)/
 	cp $(EXTRA_DIST) $(distdir)/
