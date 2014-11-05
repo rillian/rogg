@@ -73,3 +73,11 @@ dist : *.c *.h Makefile
 	cp $(EXTRA_DIST) $(distdir)/
 	tar czf $(distdir).tar.gz $(distdir)
 	rm -rf $(distdir)
+
+distcheck : dist
+	if test -d $(distdir); then rm -rf $(distdir); fi
+	tar xf $(distdir).tar.gz
+	cd $(distdir) && make check
+	cd $(distdir) && make dist
+	rm -rf $(distdir)
+	@echo $(distdir).tar.gz is ready to distribute
