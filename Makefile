@@ -1,7 +1,7 @@
 # simple Makefile for rogg and related utilities
 
 PACKAGE = rogg
-VERSION = 0.5svn
+VERSION = 0.5git
 
 prefix = /usr/local
 
@@ -60,6 +60,10 @@ uninstall :
 	-rm -f $(prefix)/lib/librogg.a
 	-rm -f $(prefix)/include/rogg.h
 	-for util in $(rogg_UTILS); do rm -f $(prefix)/bin/$$util; done
+
+# Override static version with git revision info if possible.
+GIT_VERSION := $(shell git describe --always --tags  --dirty)
+VERSION := $(or $(GIT_VERSION),$(VERSION),unknown)
 
 distdir = $(PACKAGE)-$(VERSION)
 dist : *.c *.h Makefile
