@@ -4,6 +4,7 @@ librogg.a
 rogg_crcfix
 rogg_eosfix
 rogg_kate
+rogg_opus
 rogg_pagedump
 rogg_serial
 rogg_stats
