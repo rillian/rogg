@@ -85,7 +85,7 @@ int parse_args(int *argc, char *argv[])
     if (shift) {
       int left = *argc - arg - shift;
       if (left < 0) {
-	fprintf(stderr, "Interal error parsing argument '%s'.\n", argv[arg]);
+	fprintf(stderr, "Internal error parsing argument '%s'.\n", argv[arg]);
 	exit(1);
       }
       memmove(&argv[arg], &argv[arg+shift], left*sizeof(*argv));
