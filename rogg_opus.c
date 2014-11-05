@@ -89,7 +89,7 @@ void print_opus_info(FILE *out, unsigned char *data)
   int channels = data[9];
   int preskip = get16(data + 10);
   int input = get32(data + 12);
-  int gain = get16(data + 16);
+  short gain = get16(data + 16);
   int mapping = data[18];
   fprintf(out, "  Opus info header version %d (%d.%d)\n",
 	version, version >> 4, version & 0xf);
@@ -233,6 +233,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Setting gain isn't yet supported.\n");
 	  }
 	  if (gain_set) {
+            put16(header.data+16, gain);
 	    rogg_page_update_crc(q);
 	    fprintf(stdout, "New settings:\n");
 	    print_opus_info(stdout, header.data);
