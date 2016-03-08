@@ -9,7 +9,7 @@ OPTS = -g -O2 -Wall
 
 rogg_UTILS = rogg_pagedump rogg_eosfix rogg_crcfix \
 	rogg_stats rogg_serial rogg_theora rogg_kate \
-	rogg_opus
+	rogg_opus rogg_granule
 
 all : librogg.a $(rogg_UTILS)
 
@@ -41,6 +41,9 @@ rogg_kate : rogg_kate.o librogg.a
 	$(CC) $(CFLAGS) -o $@ $^
 
 rogg_opus : rogg_opus.o librogg.a
+	$(CC) $(CFLAGS) -o $@ $^ -lm
+
+rogg_granule : rogg_granule.o librogg.a
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
 check : all
