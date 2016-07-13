@@ -3,6 +3,7 @@ librogg.a
 *~
 rogg_crcfix
 rogg_eosfix
+rogg_granule
 rogg_kate
 rogg_opus
 rogg_pagedump
