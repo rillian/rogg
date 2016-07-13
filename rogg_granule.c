@@ -68,6 +68,11 @@ void parse_args(int *argc, char *argv[])
     if (argv[arg][0] == '-') {
       switch (argv[arg][1]) {
 	case 'g':
+	  shift = 2;
+	  if (*argc - arg - shift < 0) {
+	    fprintf(stderr, "Error parsing arguments: Option -g requires an argument.\n");
+	    exit(1);
+	  }
 	  /* read granule adjustment from the next arg */
 	  if (sscanf(argv[arg+1], "%i", &granule_adjust) != 1) {
 	    fprintf(stderr, "Could not parse granule adjustment '%s'.\n", argv[arg+1]);
@@ -75,7 +80,6 @@ void parse_args(int *argc, char *argv[])
 	  } else {
 	    fprintf(stdout, "Adjusting granule position by %i\n", granule_adjust);
 	  }
-	  shift = 2;
 	  break;
       }
     }
