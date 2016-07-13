@@ -29,7 +29,7 @@
 /* ogg logical stream serial number mod script using the rogg library */
 
 /* compile with
-   gcc -O2 -g -Wall -I. -o rogg_changeserial rogg.c rogg_changeserial.c
+   gcc -O2 -g -Wall -I. -o rogg_serial rogg.c rogg_serial.c
 */
 
 #include <stdio.h>
