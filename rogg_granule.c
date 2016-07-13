@@ -58,7 +58,7 @@ void print_usage(FILE *out, char *name)
 		  "\n");
 }
 
-int parse_args(int *argc, char *argv[])
+void parse_args(int *argc, char *argv[])
 {
   int arg = 1;
   int shift;
@@ -91,8 +91,6 @@ int parse_args(int *argc, char *argv[])
       arg++;
     }
   }
-
-  return 0;
 }
 
 int main(int argc, char *argv[])
