@@ -97,6 +97,13 @@ void parse_args(int *argc, char *argv[])
   }
 }
 
+static int page_has_granulepos(unsigned char *p)
+{
+  uint64_t granulepos = 0;
+  rogg_read_uint64(&p[ROGG_OFFSET_GRANULEPOS], &granulepos);
+  return granulepos != ~(uint64_t)0;
+}
+
 int main(int argc, char *argv[])
 {
   int f, i;
@@ -129,34 +136,73 @@ int main(int argc, char *argv[])
 	close(f);
 	continue;
     }
+
+    /* first pass: scan whether we would write invalid -1 granulepos */
     fprintf(stdout, "Checking Ogg file '%s'\n", argv[i]);
     e = p + s.st_size; /* pointer to the end of the file */
     q = rogg_scan(p, s.st_size); /* scan for an Ogg page */
     if (q == NULL) {
-	fprintf(stdout, "couldn't find ogg data!\n");
+      fprintf(stdout, "couldn't find ogg data!\n");
     } else {
       if (q > p) {
-	fprintf(stdout, "Skipped %d garbage bytes at the start\n", (int)(q-p));
+        fprintf(stdout, "Skipped %d garbage bytes at the start\n", (int)(q-p));
       }
       while (q < e) {
-	o = rogg_scan(q, e-q); /* find the next Ogg page */
-	if (o > q) {
-	  fprintf(stdout, "Hole in data! skipped %d bytes\n", (int)(o-q));
-	   q = o;
-	} else if (o == NULL) {
-	  fprintf(stdout, "Skipped %d garbage bytes as the end\n", (int)(e-q));
-	  break;
-	}
-	rogg_page_parse(q, &header);
-	rogg_read_uint64(&q[ROGG_OFFSET_GRANULEPOS], &granulepos);
-	if (granulepos != 0 && granulepos != ~(uint64_t)0) {
+        o = rogg_scan(q, e-q); /* find the next Ogg page */
+        if (o > q) {
+          fprintf(stdout, "Hole in data! skipped %d bytes\n", (int)(o-q));
+          q = o;
+        } else if (o == NULL) {
+          fprintf(stdout, "Skipped %d garbage bytes as the end\n", (int)(e-q));
+          break;
+        }
+        rogg_page_parse(q, &header);
+        rogg_read_uint64(&q[ROGG_OFFSET_GRANULEPOS], &granulepos);
+        if (granulepos != 0 && page_has_granulepos(q)) {
+          granulepos += (int64_t)granule_adjust;
+          if (granulepos == ~(uint64_t)0) {
+            fprintf(stderr,
+              "Error: granulepos offset would result in a granulepos of -1, "
+              "which would be an unparsable stream. Aborting.\n");
+            munmap(p, s.st_size);
+            close(f);
+            exit(1);
+          }
+        }
+        q += header.length;
+      }
+    }
+
+    /* second pass: actually apply granulepos offset */
+    fprintf(stdout, "Applying granulepos offset to file '%s'\n", argv[i]);
+    e = p + s.st_size; /* pointer to the end of the file */
+    q = rogg_scan(p, s.st_size); /* scan for an Ogg page */
+    if (q == NULL) {
+      /* fprintf(stdout, "couldn't find ogg data!\n"); */
+    } else {
+      if (q > p) {
+        /* fprintf(stdout, "Skipped %d garbage bytes at the start\n", (int)(q-p)); */
+      }
+      while (q < e) {
+        o = rogg_scan(q, e-q); /* find the next Ogg page */
+        if (o > q) {
+          /* fprintf(stdout, "Hole in data! skipped %d bytes\n", (int)(o-q)); */
+          q = o;
+        } else if (o == NULL) {
+          /* fprintf(stdout, "Skipped %d garbage bytes as the end\n", (int)(e-q)); */
+          break;
+        }
+        rogg_page_parse(q, &header);
+        rogg_read_uint64(&q[ROGG_OFFSET_GRANULEPOS], &granulepos);
+        if (granulepos != 0 && page_has_granulepos(q)) {
           granulepos += (int64_t)granule_adjust;
           rogg_write_uint64(&q[ROGG_OFFSET_GRANULEPOS], granulepos);
           rogg_page_update_crc(q);
         }
-	q += header.length;
+        q += header.length;
       }
     }
+
     munmap(p, s.st_size);
     close(f);
   }
