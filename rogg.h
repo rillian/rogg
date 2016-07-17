@@ -90,6 +90,15 @@ void rogg_page_get_length(unsigned char *p, int *length);
 /* parse out the header fields of the page starting at p */
 void rogg_page_parse(unsigned char *p, rogg_page_header *header);
 
+/* return number of packets starting on this page */
+int rogg_page_packets_starting(rogg_page_header *header);
+
+/* return number of packets ending on this page */
+int rogg_page_packets_ending(rogg_page_header *header);
+
+/* return number of full packets on this page */
+int rogg_page_packets_full(rogg_page_header *header);
+
 /* recompute and store a new crc on the page starting at p */
 void rogg_page_update_crc(unsigned char *p);
 
