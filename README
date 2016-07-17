@@ -27,6 +27,6 @@ Examples:
   rogg_kate will dump and optionally set the language, category,
   and original canvas size stored in an Ogg Kate stream.
 
-  rogg_granule will adjust non-zero and non-minus1 granule positions
+  rogg_granule will adjust non-header and non-minus1 granule positions
   by the given amount, which is useful to chop off individual PCM
   samples at the beginnig of Vorbis streams.
