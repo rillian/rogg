@@ -145,6 +145,53 @@ void rogg_page_parse(unsigned char *p, rogg_page_header *header)
   rogg_page_get_length(p, &header->length);
 }
 
+/* return number of packets starting on this page */
+int rogg_page_packets_starting(rogg_page_header *header)
+{
+  int packets = 0;
+  int packet_running = header->continued;
+  int i = 0;
+  for (i = 0; i < header->segments; ++i) {
+    if (!packet_running) {
+      packet_running = 1;
+      packets++;
+    }
+    if (header->lacing[i] < 255) {
+      packet_running = 0;
+    }
+  }
+  return packets;
+}
+
+/* return number of packets ending on this page */
+int rogg_page_packets_ending(rogg_page_header *header)
+{
+  int packets = 0;
+  int i = 0;
+  for (i = 0; i < header->segments; ++i) {
+    if (header->lacing[i] < 255) {
+      packets++;
+    }
+  }
+  return packets;
+}
+
+/* return number of full packets on this page */
+int rogg_page_packets_full(rogg_page_header *header)
+{
+  int packets = 0;
+  int i = 0;
+  for (i = 0; i < header->segments; ++i) {
+    if (header->lacing[i] < 255) {
+      packets++;
+    }
+  }
+  if (header->continued && (packets > 0)) {
+    packets--;
+  }
+  return packets;
+}
+
 /* helper lookup table for the crc */
 static const uint32_t rogg_crc_lookup[256]={
   0x00000000,0x04c11db7,0x09823b6e,0x0d4326d9,
