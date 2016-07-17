@@ -45,6 +45,7 @@
 
 #include <rogg.h>
 
+int header_packets = 3;
 int granule_adjust = 0;
 
 void print_usage(FILE *out, char *name)
@@ -53,8 +54,9 @@ void print_usage(FILE *out, char *name)
   fprintf(stderr, "%s [-g n] <file1.ogg> [<file2.ogg>...]\n",
 	name);
   fprintf(stderr,
-		  "    -g n        change the granule position of a logical vorbis stream by n\n"
-		  "                (can be positive or negative)\n"
+		  "    -k n        Skip n header pacekts. Default is 3, which is suitable for Vorbis.\n"
+		  "    -g n        Change the granule position of a logical vorbis stream by n\n"
+		  "                (can be positive or negative).\n"
 		  "\n");
 }
 
@@ -67,6 +69,23 @@ void parse_args(int *argc, char *argv[])
     shift = 0;
     if (argv[arg][0] == '-') {
       switch (argv[arg][1]) {
+        case 'k':
+          shift = 2;
+          if (*argc - arg - shift < 0) {
+            fprintf(stderr, "Error parsing arguments: Option -k requires an argument.\n");
+            exit(1);
+          }
+          /* read number of header packets from the next arg */
+          if (sscanf(argv[arg+1], "%i", &header_packets) != 1) {
+            fprintf(stderr, "Could not parse number of header packets '%s'. Defaulting to 3\n", argv[arg+1]);
+            header_packets = 3;
+          } else if (header_packets < 0) {
+            fprintf(stderr, "Error: Number of header packets is negative.\n");
+            exit(1);
+          } else {
+            fprintf(stdout, "Skipping %i header packets.\n", header_packets);
+          }
+          break;
 	case 'g':
 	  shift = 2;
 	  if (*argc - arg - shift < 0) {
@@ -110,6 +129,8 @@ int main(int argc, char *argv[])
   unsigned char *p, *q, *o, *e;
   struct stat s;
   rogg_page_header header;
+  int header_done;
+  uint64_t packetno;
   uint64_t granulepos;
 
   parse_args(&argc, argv);
@@ -140,6 +161,8 @@ int main(int argc, char *argv[])
     /* first pass: scan whether we would write invalid -1 granulepos */
     fprintf(stdout, "Checking Ogg file '%s'\n", argv[i]);
     e = p + s.st_size; /* pointer to the end of the file */
+    packetno = 0;
+    header_done = 0;
     q = rogg_scan(p, s.st_size); /* scan for an Ogg page */
     if (q == NULL) {
       fprintf(stdout, "couldn't find ogg data!\n");
@@ -157,8 +180,24 @@ int main(int argc, char *argv[])
           break;
         }
         rogg_page_parse(q, &header);
+        packetno += rogg_page_packets_ending(&header);
+        if (packetno < header_packets) {
+          q += header.length;
+          continue;
+        } else if (packetno == header_packets) {
+          header_done = 1;
+          q += header.length;
+          continue;
+        } else if (!header_done) {
+            fprintf(stderr,
+              "Error: Header packets do not terminate on a page boundary. "
+              "Cannot adjust granulepos meaningfully. Aborting.\n");
+            munmap(p, s.st_size);
+            close(f);
+            exit(1);
+        }
         rogg_read_uint64(&q[ROGG_OFFSET_GRANULEPOS], &granulepos);
-        if (granulepos != 0 && page_has_granulepos(q)) {
+        if (page_has_granulepos(q)) {
           granulepos += (int64_t)granule_adjust;
           if (granulepos == ~(uint64_t)0) {
             fprintf(stderr,
@@ -176,6 +215,8 @@ int main(int argc, char *argv[])
     /* second pass: actually apply granulepos offset */
     fprintf(stdout, "Applying granulepos offset to file '%s'\n", argv[i]);
     e = p + s.st_size; /* pointer to the end of the file */
+    packetno = 0;
+    header_done = 0;
     q = rogg_scan(p, s.st_size); /* scan for an Ogg page */
     if (q == NULL) {
       /* fprintf(stdout, "couldn't find ogg data!\n"); */
@@ -193,8 +234,17 @@ int main(int argc, char *argv[])
           break;
         }
         rogg_page_parse(q, &header);
+        packetno += rogg_page_packets_ending(&header);
+        if (packetno < header_packets) {
+          q += header.length;
+          continue;
+        } else if (packetno == header_packets) {
+          header_done = 1;
+          q += header.length;
+          continue;
+        }
         rogg_read_uint64(&q[ROGG_OFFSET_GRANULEPOS], &granulepos);
-        if (granulepos != 0 && page_has_granulepos(q)) {
+        if (page_has_granulepos(q)) {
           granulepos += (int64_t)granule_adjust;
           rogg_write_uint64(&q[ROGG_OFFSET_GRANULEPOS], granulepos);
           rogg_page_update_crc(q);
